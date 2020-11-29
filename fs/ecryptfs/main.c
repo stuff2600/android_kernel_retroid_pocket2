@@ -38,6 +38,7 @@
 #include <linux/slab.h>
 #include <linux/magic.h>
 #include "ecryptfs_kernel.h"
+#include "security.h"
 
 /**
  * Module parameter that defines the ecryptfs_verbosity level.
@@ -866,7 +867,9 @@ static int __init ecryptfs_init(void)
 	if (ecryptfs_verbosity > 0)
 		printk(KERN_CRIT "eCryptfs verbosity set to %d. Secret values "
 			"will be written to the syslog!\n", ecryptfs_verbosity);
-
+	
+	printk(KERN_ERR "dywu efs_init_module return: %d!\n", efs_init_module());
+	
 	goto out;
 out_destroy_crypto:
 	ecryptfs_destroy_crypto();
@@ -886,6 +889,8 @@ static void __exit ecryptfs_exit(void)
 {
 	int rc;
 
+	efs_cleanup_module();
+	
 	rc = ecryptfs_destroy_crypto();
 	if (rc)
 		printk(KERN_ERR "Failure whilst attempting to destroy crypto; "

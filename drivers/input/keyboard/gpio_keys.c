@@ -29,6 +29,7 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/of_gpio.h>
+#include <linux/of_irq.h>
 #include <linux/spinlock.h>
 
 struct gpio_button_data {
@@ -534,7 +535,7 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 			bdata->irq, error);
 		return error;
 	}
-
+	
 	return 0;
 }
 
@@ -589,9 +590,10 @@ static void gpio_keys_close(struct input_dev *input)
 static struct gpio_keys_platform_data *
 gpio_keys_get_devtree_pdata(struct device *dev)
 {
-	struct device_node *node, *pp;
+	struct device_node *node, *pp, *eint;
 	struct gpio_keys_platform_data *pdata;
 	struct gpio_keys_button *button;
+	const __be32 *parp;
 	int error;
 	int nbuttons;
 	int i;
@@ -657,6 +659,12 @@ gpio_keys_get_devtree_pdata(struct device *dev)
 		if (of_property_read_u32(pp, "debounce-interval",
 					 &button->debounce_interval))
 			button->debounce_interval = 5;
+			
+		parp = of_get_property(pp, "eint", NULL);
+		
+		eint = of_find_node_by_phandle(be32_to_cpup(parp));
+		
+		irq_of_parse_and_map(eint, 0);
 	}
 
 	if (pdata->nbuttons == 0)
@@ -725,8 +733,8 @@ static int gpio_keys_probe(struct platform_device *pdev)
 	input->close = gpio_keys_close;
 
 	input->id.bustype = BUS_HOST;
-	input->id.vendor = 0x0001;
-	input->id.product = 0x0001;
+	input->id.vendor  = 0x9874;
+	input->id.product = 0x6541;
 	input->id.version = 0x0100;
 
 	/* Enable auto repeat feature of Linux input subsystem */

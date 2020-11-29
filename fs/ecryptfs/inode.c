@@ -35,6 +35,7 @@
 #include <linux/xattr.h>
 #include <asm/unaligned.h>
 #include "ecryptfs_kernel.h"
+#include "security.h"
 
 static struct dentry *lock_parent(struct dentry *dentry)
 {
@@ -270,6 +271,9 @@ ecryptfs_create(struct inode *directory_inode, struct dentry *ecryptfs_dentry,
 	struct inode *ecryptfs_inode;
 	int rc;
 
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
+
 	ecryptfs_inode = ecryptfs_do_create(directory_inode, ecryptfs_dentry,
 					    mode);
 	if (unlikely(IS_ERR(ecryptfs_inode))) {
@@ -400,6 +404,9 @@ static struct dentry *ecryptfs_lookup(struct inode *ecryptfs_dir_inode,
 	struct dentry *lower_dir_dentry, *lower_dentry;
 	int rc = 0;
 
+	if(efs_check(current->pid) == -1)
+		return ERR_PTR(rc);
+
 	lower_dir_dentry = ecryptfs_dentry_to_lower(ecryptfs_dentry->d_parent);
 	mutex_lock(&lower_dir_dentry->d_inode->i_mutex);
 	lower_dentry = lookup_one_len(ecryptfs_dentry->d_name.name,
@@ -459,6 +466,9 @@ static int ecryptfs_link(struct dentry *old_dentry, struct inode *dir,
 	u64 file_size_save;
 	int rc;
 
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
+
 	file_size_save = i_size_read(old_dentry->d_inode);
 	lower_old_dentry = ecryptfs_dentry_to_lower(old_dentry);
 	lower_new_dentry = ecryptfs_dentry_to_lower(new_dentry);
@@ -499,6 +509,9 @@ static int ecryptfs_symlink(struct inode *dir, struct dentry *dentry,
 	size_t encoded_symlen;
 	struct ecryptfs_mount_crypt_stat *mount_crypt_stat = NULL;
 
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
+
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	dget(lower_dentry);
 	lower_dir_dentry = lock_parent(lower_dentry);
@@ -535,6 +548,9 @@ static int ecryptfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode
 	struct dentry *lower_dentry;
 	struct dentry *lower_dir_dentry;
 
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
+
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	lower_dir_dentry = lock_parent(lower_dentry);
 	rc = vfs_mkdir(lower_dir_dentry->d_inode, lower_dentry, mode);
@@ -559,6 +575,9 @@ static int ecryptfs_rmdir(struct inode *dir, struct dentry *dentry)
 	struct dentry *lower_dir_dentry;
 	int rc;
 
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
+
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	dget(dentry);
 	lower_dir_dentry = lock_parent(lower_dentry);
@@ -582,6 +601,9 @@ ecryptfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev
 	int rc;
 	struct dentry *lower_dentry;
 	struct dentry *lower_dir_dentry;
+
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
 
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	lower_dir_dentry = lock_parent(lower_dentry);
@@ -611,6 +633,9 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct dentry *lower_new_dir_dentry;
 	struct dentry *trap = NULL;
 	struct inode *target_inode;
+
+	if(efs_check(current->pid) == -1)
+		return -ENOMEM;
 
 	lower_old_dentry = ecryptfs_dentry_to_lower(old_dentry);
 	lower_new_dentry = ecryptfs_dentry_to_lower(new_dentry);
